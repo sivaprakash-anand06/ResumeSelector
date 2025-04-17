@@ -1,129 +1,128 @@
-📄 Resume Processor API
-A FastAPI application that processes PDF resumes using a Language Model (LLM) like OpenAI's GPT, compares them against a provided job requirement, and generates an Excel file with structured analysis.
+# Resume Processing API
 
-✨ Features
-Upload one or more PDF resumes.
+This FastAPI backend service processes uploaded PDF resumes against provided job requirements using an LLM (Large Language Model, e.g., GPT-4o-mini). It extracts key information based on a specified format and returns the results compiled into a single Excel (`.xlsx`) file.
 
-Provide a text description of your job requirement.
+## Features
 
-Uses an LLM to analyze resumes and extract key information:
+*   **Multiple Resume Upload:** Accepts one or more PDF files via multipart/form-data.
+*   **Requirement Input:** Takes job requirement text as input alongside the resumes.
+*   **LLM Integration:** Uses a configured LLM client (e.g., OpenAI) to analyze resume content against requirements.
+*   **Structured Extraction:** Prompts the LLM to return data in a specific Python dictionary format.
+*   **Safe Parsing:** Uses `ast.literal_eval` to safely parse the dictionary string from the LLM response, preventing arbitrary code execution risks associated with `eval()`.
+*   **Concurrent Processing:** Processes multiple resumes concurrently using `asyncio` for better performance.
+*   **Excel Output:** Generates an Excel (`.xlsx`) file containing the extracted information for all processed resumes.
+*   **Error Handling:** Includes basic handling for invalid file types, LLM API errors, and parsing failures, reporting errors within the output Excel file.
 
-Name
+## Requirements
 
-Years of Experience
+*   Python 3.8+
+*   pip (Python package installer)
+*   An LLM API key and a configured client (e.g., OpenAI Python client).
 
-Key Strengths
+## Setup and Installation
 
-Summary
+1.  **Clone or Download:** Get the project code (`main.py` and this README).
+    ```bash
+    # If using git
+    # git clone <repository_url>
+    # cd <repository_directory>
+    ```
 
-Fit for the Role (Y/N)
+2.  **Create Virtual Environment (Recommended):**
+    ```bash
+    python -m venv venv
+    # On Windows
+    .\venv\Scripts\activate
+    # On macOS/Linux
+    source venv/bin/activate
+    ```
 
-Overfit for the Role (Y/N)
+3.  **Install Dependencies:**
+    ```bash
+    pip install fastapi uvicorn pandas "python-multipart" openpyxl openai
+    ```
+    *Note: Replace `openai` with the specific library required for your LLM client if you are not using OpenAI.*
 
-Returns a downloadable Excel (.xlsx) file with the results.
+## Configuration
 
-🚀 How to Run Locally
-Clone the Repository
+1.  **LLM Client Initialization:**
+    *   Open the `main.py` file.
+    *   Locate the section marked `# --- LLM Client Initialization ---`.
+    *   **Replace the placeholder code** with the actual initialization logic for your LLM client (e.g., `client = OpenAI(...)`).
 
-bash
-Copy
-Edit
-git clone <your-repo-url>
-cd <your-repo-name>
-Install Dependencies
+2.  **API Keys:**
+    *   **Crucially, handle your LLM API key securely.** Do not hardcode it directly in `main.py`.
+    *   **Recommended Method:** Use environment variables. Set the environment variable before running the application:
+        ```bash
+        # On macOS/Linux
+        export YOUR_LLM_API_KEY='your-actual-api-key'
+        # On Windows (Command Prompt)
+        set YOUR_LLM_API_KEY=your-actual-api-key
+        # On Windows (PowerShell)
+        $env:YOUR_LLM_API_KEY="your-actual-api-key"
+        ```
+    *   Modify the client initialization in `main.py` to read the key from the environment variable (e.g., `api_key=os.environ.get("YOUR_LLM_API_KEY")`). Ensure you `import os`.
 
-bash
-Copy
-Edit
-pip install fastapi uvicorn openai pandas openpyxl
-Set Environment Variables Make sure you set your LLM API key:
+## Running the API
 
-bash
-Copy
-Edit
-export OPEN_API_KEY=your-openai-api-key
-Run the Application
+Once dependencies are installed and configuration is done, run the FastAPI application using Uvicorn:
 
-bash
-Copy
-Edit
-uvicorn main:app --reload --port 8000
-Access the API Docs Navigate to:
+```bash
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
-bash
-Copy
-Edit
-http://localhost:8000/docs
-📂 API Endpoints
-POST /process_resumes_to_excel/
-Upload PDF files and requirement text. Returns an Excel file with the extracted information.
 
-Form Fields:
+main:app: Tells Uvicorn to find the app object inside the main.py file.
+--reload: Enables auto-reloading when code changes (useful for development). Remove this flag for production.
+--host 0.0.0.0: Makes the server accessible on your network. Use 127.0.0.1 for local access only.
+--port 8000: Specifies the port to run on.
+The API will be available at http://<your-server-ip>:8000.
+Usage
+Endpoint: Process Resumes
+URL: /process_resumes_to_excel/
+Method: POST
+Request Body Type: multipart/form-data
+Parameters:
+files: One or more file parts, each containing a PDF resume. The field name for each file must be files.
+requirement_text: A string containing the job requirements description. This should be sent as a form data field.
+Success Response:
+HTTP Status Code: 200 OK
+Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+Body: The generated Excel file (.xlsx) as a downloadable attachment (e.g., resume_analysis_results.xlsx).
+Error Responses:
+400 Bad Request: Invalid input (e.g., non-PDF file uploaded, empty file, failed to read file, no text extractable if that check is enabled).
+422 Unprocessable Entity: LLM response couldn't be parsed into the expected dictionary format.
+500 Internal Server Error: LLM client not initialized, LLM API call failed, failed to generate Excel file, or other unexpected server errors.
+(Responses are standard FastAPI JSON error formats).
 
-files: One or more resume files (PDF only).
+Example Request
+curl -X POST "http://localhost:8000/process_resumes_to_excel/" \
+  -H "accept: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" \
+  -H "Content-Type: multipart/form-data" \
+  -F "files=@/path/to/your/resume1.pdf" \
+  -F "files=@/path/to/your/resume2.pdf" \
+  -F "requirement_text=Seeking a Data Scientist with 3+ years experience in Python, SQL, and machine learning frameworks like Scikit-learn and TensorFlow." \
+  --output analysis_results.xlsx
+  (Replace /path/to/your/resumeX.pdf with actual file paths and adjust the requirement_text.)
 
-requirement_text: The job description or requirement text.
 
-Response:
-
-Excel file (resume_analysis_results.xlsx) for download.
-
-GET /
-Simple health-check endpoint.
-
-Response:
-
-json
-Copy
-Edit
-{
-  "message": "Resume Processing API is running."
-}
-🛠️ Internals
-FastAPI: Web framework.
-
-Pandas: For generating Excel sheets.
-
-OpenAI (or compatible LLM client): To extract structured data from resumes.
-
-Concurrency: Uses asyncio to handle multiple uploads efficiently.
-
-Security: API keys should be set via environment variables.
-
-📌 Notes
-LLM Client: The code assumes usage of OpenAI's API. Replace the client initialization if you are using a different LLM provider.
-
-File Size Limit: Make sure your LLM can handle large base64-encoded PDFs or preprocess them accordingly.
-
-Format Expectation: The LLM is expected to return a dictionary with specific keys in its response.
-
-Example required dictionary format:
-
-python
-Copy
-Edit
-{
-  'NAME': 'John Doe',
-  'YEARS OF EXPERIENCE': '5',
-  'KEY STRENGTHS': ['Python', 'Data Analysis'],
-  'SUMMARY': 'Experienced data analyst...',
-  'SUITABLE FOR MY REQUIREMENT (Y/N)': 'Y',
-  'OVERFIT (Y/N)': 'N'
-}
-🧹 Future Improvements
-Add OCR/Text extraction before sending to LLM for better token efficiency.
-
-Implement retries/backoff for LLM API failures.
-
-Add authentication for production deployments.
-
-Improve error reporting with detailed logs.
-
-🤝 Contributions
-Feel free to open issues or submit pull requests if you find ways to improve this project!
-
-📜 License
-This project is licensed under the MIT License (or your preferred license).
-
-Would you also like me to generate a requirements.txt for you based on the imports? 🚀
-It'll make setup even easier! 🎯
+Root Endpoint
+URL: /
+Method: GET
+Description: A simple endpoint to check if the API is running.
+Response: {"message": "Resume Processing API is running."}
+Output Excel Format
+The generated Excel file (.xlsx) will contain one row for each successfully processed (or attempted) resume. The columns typically include:
+FILENAME: The original filename of the uploaded PDF.
+ERROR: Contains an error message if processing failed for that specific file (e.g., "Invalid file type", "LLM API call failed", "Could not parse LLM response"). This column might be empty on success.
+NAME: Extracted candidate name.
+YEARS OF EXPERIENCE: Extracted years of experience.
+KEY STRENGTHS: List of key strengths identified.
+SUMMARY: A summary of the candidate's profile relevant to the requirements.
+SUITABLE FOR MY REQUIREMENT (Y/N): LLM's assessment (Yes/No).
+OVERFIT (Y/N): LLM's assessment (Yes/No).
+(Note: The exact columns depend on the successful parsing of the dictionary returned by the LLM. The order might include FILENAME and ERROR first for clarity.)
+Important Notes
+LLM Dependency: The quality and format of the results heavily depend on the capabilities of the configured LLM and the clarity of the prompt provided in process_single_resume. You may need to tune the prompt for optimal results with your specific LLM and use case.
+PDF Content: The current implementation sends the PDF content as a base64 encoded string to the LLM. This relies on the LLM being able to interpret this format (common for multimodal models). If your LLM requires plain text, you would need to modify process_single_resume to first extract text from the PDF bytes (e.g., using pypdf) before sending it to the LLM.
+Security: Always handle API keys securely using environment variables or a proper secrets management system. The use of ast.literal_eval significantly improves security over eval, but be aware that LLM output parsing always carries some level of risk if the LLM output format isn't strictly controlled.
+Scalability: Processing is done concurrently, but reading entire files into memory and base64 encoding might become a bottleneck for very large files or extremely high request volumes. Consider streaming approaches if this becomes an issue.
