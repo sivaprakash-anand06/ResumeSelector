@@ -2,3 +2,4 @@ fastapi==0.115.11
 openai==1.75.0
 pandas==2.2.3
 python-dotenv==1.0.1
+python-multipart==0.0.20
