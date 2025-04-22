@@ -7,9 +7,12 @@ import asyncio
 from typing import List, Dict, Any
 
 from fastapi import FastAPI, HTTPException, File, UploadFile, Form
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 import pandas as pd
+from dotenv import load_dotenv
 
+load_dotenv()
 # --- LLM Client Initialization ---
 # IMPORTANT: Replace this with your actual client initialization
 # Ensure API keys are handled securely (e.g., environment variables)
@@ -134,6 +137,15 @@ async def process_single_resume(
 app = FastAPI(
     title="Resume Processor to Excel",
     description="Upload resumes (PDFs) and requirements to get an Excel analysis.",
+)
+
+# Enable CORS for frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.post(
