@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 import pandas as pd
 from dotenv import load_dotenv
-
+import logging
 load_dotenv()
 # --- LLM Client Initialization ---
 # IMPORTANT: Replace this with your actual client initialization
@@ -19,6 +19,7 @@ load_dotenv()
 try:
     # Example using OpenAI client - replace with your actual client library
     from openai import OpenAI, APIConnectionError
+    logging.info("Get OpenAI token from environment...")
     client = OpenAI(
         api_key= os.environ.get("OPEN_API_KEY") # Good practice
     )
@@ -142,7 +143,7 @@ app = FastAPI(
 # Enable CORS for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:3000", "https://resume-shortlist-ui.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
